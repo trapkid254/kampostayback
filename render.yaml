@@ -1,0 +1,39 @@
+# Render.com Blueprint for KampoStay API
+# Repo: https://github.com/trapkid254/kampostayback
+# Docs: https://render.com/docs/blueprint-spec
+#
+# This repo root IS the API (package.json + src/). Do not set rootDir to "backend".
+
+services:
+  - type: web
+    name: kampostay-api
+    runtime: node
+    region: frankfurt
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Do NOT hardcode PORT — Render injects it automatically
+      - key: APP_URL
+        sync: false
+      - key: CLIENT_URL
+        sync: false
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: COOKIE_SECRET
+        generateValue: true
+      - key: MPESA_CALLBACK_URL
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
