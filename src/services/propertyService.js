@@ -1,10 +1,12 @@
 'use strict';
 
+const mongoose = require('mongoose');
 const Property = require('../models/Property');
 const University = require('../models/University');
 const AppError = require('../utils/AppError');
 const { haversineDistanceKm, estimateWalkingTimeMinutes } = require('../utils/geo');
 const fraudService = require('./fraudService');
+const { slugify } = require('../utils/slugify');
 
 function buildFilterQuery(filters = {}) {
   const query = {};
@@ -153,6 +155,19 @@ async function getPropertyBySlug(slug, incrementView = true) {
 }
 
 async function createProperty(landlordId, data) {
+  // Resolve university when a string (e.g., "JKUAT" or a name) is provided
+  if (data.university && typeof data.university === 'string') {
+    if (!mongoose.isValidObjectId(data.university)) {
+      const lookup = String(data.university).trim();
+      const uniSlug = slugify(lookup);
+      let uni = await University.findOne({ $or: [{ slug: uniSlug }, { name: lookup }, { aliases: lookup }] });
+      if (!uni) {
+        uni = await University.create({ name: lookup });
+      }
+      data.university = uni._id;
+    }
+  }
+
   const fraudCheck = await fraudService.analyzeListing(data, landlordId);
   const property = await Property.create({
     ...data,
