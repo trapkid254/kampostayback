@@ -15,6 +15,7 @@ const routes = require('./routes');
 const { errorHandler } = require('./middleware/errorHandler');
 const { generalLimiter } = require('./middleware/rateLimiter');
 const { setCsrfToken, verifyCsrf, getCsrfToken } = require('./middleware/csrf');
+const path = require('path');
 
 const app = express();
 
@@ -67,6 +68,9 @@ app.use(xss());
 app.use(hpp());
 app.use(setCsrfToken);
 app.use(generalLimiter);
+
+// Serve locally-saved uploads (development fallback when Cloudinary is not configured)
+app.use('/uploads', express.static(path.join(process.cwd(), 'public', 'uploads')));
 
 app.get('/api/v1/csrf-token', getCsrfToken);
 

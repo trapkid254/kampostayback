@@ -1,19 +1,43 @@
-'use strict';
+"use strict";
 
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 const { getCloudinary, isCloudinaryConfigured } = require('../config/cloudinary');
+const env = require('../config/env');
 const AppError = require('../utils/AppError');
 
 async function uploadBuffer(buffer, options = {}) {
   if (!isCloudinaryConfigured()) {
+    // Save the buffer to a local uploads folder so the uploaded image is visible
     const hash = crypto.createHash('md5').update(buffer).digest('hex').slice(0, 12);
-    return {
-      url: `https://placehold.co/800x600/e2e8f0/64748b?text=KampoStay+${hash}`,
-      publicId: `local/${hash}`,
-      format: options.format || 'jpg',
-      bytes: buffer.length,
-      mock: true,
-    };
+    const format = (options.format || 'jpg').replace(/[^a-z0-9]/gi, '').toLowerCase();
+    const uploadsDir = path.resolve(process.cwd(), 'public', 'uploads');
+    try {
+      if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+      const filename = `${hash}.${format}`;
+      const filePath = path.join(uploadsDir, filename);
+      fs.writeFileSync(filePath, buffer);
+      const url = `${env.APP_URL.replace(/\/$/, '')}/uploads/${filename}`;
+      return {
+        url,
+        publicId: `local/${hash}`,
+        format,
+        bytes: buffer.length,
+        mock: true,
+        savedTo: filePath,
+      };
+    } catch (err) {
+      // Fallback to placeholder if local save fails
+      const ph = crypto.createHash('md5').update(buffer).digest('hex').slice(0, 12);
+      return {
+        url: `https://placehold.co/800x600/e2e8f0/64748b?text=KampoStay+${ph}`,
+        publicId: `local/${ph}`,
+        format: options.format || 'jpg',
+        bytes: buffer.length,
+        mock: true,
+      };
+    }
   }
 
   return new Promise((resolve, reject) => {
