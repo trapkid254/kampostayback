@@ -70,8 +70,9 @@ const update = asyncHandler(async (req, res) => {
 
 const remove = asyncHandler(async (req, res) => {
   const isAdmin = req.user.role === 'admin';
-  await propertyService.deleteProperty(req.params.id, req.user._id, isAdmin);
-  res.json({ success: true, message: 'Property archived.' });
+  const permanent = String(req.query.permanent) === 'true' || req.body?.permanent === true;
+  await propertyService.deleteProperty(req.params.id, req.user._id, isAdmin, permanent);
+  res.json({ success: true, message: permanent ? 'Property permanently deleted.' : 'Property archived.' });
 });
 
 const getMyProperties = asyncHandler(async (req, res) => {

@@ -7,6 +7,10 @@ const AppError = require('../utils/AppError');
 const { haversineDistanceKm, estimateWalkingTimeMinutes } = require('../utils/geo');
 const fraudService = require('./fraudService');
 const { slugify } = require('../utils/slugify');
+const cloudinaryService = require('./cloudinaryService');
+const fs = require('fs');
+const path = require('path');
+const env = require('../config/env');
 
 function buildFilterQuery(filters = {}) {
   const query = {};
@@ -211,15 +215,79 @@ async function updateProperty(id, landlordId, data, isAdmin = false) {
   return property.populate('university', 'name slug');
 }
 
-async function deleteProperty(id, landlordId, isAdmin = false) {
+async function deleteProperty(id, landlordId, isAdmin = false, permanent = false) {
   const property = await Property.findById(id);
   if (!property) throw new AppError('Property not found.', 404);
   if (!isAdmin && property.landlord.toString() !== landlordId.toString()) {
     throw new AppError('Not authorized.', 403);
   }
-  property.status = 'archived';
-  await property.save();
-  return property;
+
+  if (!permanent) {
+    property.status = 'archived';
+    await property.save();
+    return property;
+  }
+
+  // Permanent deletion: remove associated assets (images/videos) where possible
+  const images = property.media?.images || [];
+  const videos = property.media?.videos || [];
+
+  for (const img of images) {
+    if (img.publicId) {
+      try {
+        await cloudinaryService.deleteAsset(img.publicId);
+      } catch (err) {
+        // log and continue
+        // eslint-disable-next-line no-console
+        console.warn('Failed to delete asset', img.publicId, err.message || err);
+      }
+
+      // remove local file when using local fallback publicId
+      if (String(img.publicId).startsWith('local/')) {
+        try {
+          const hash = String(img.publicId).split('/')[1];
+          const uploadsDir = path.resolve(process.cwd(), 'public', 'uploads');
+          if (fs.existsSync(uploadsDir)) {
+            const files = fs.readdirSync(uploadsDir).filter((f) => f.startsWith(hash));
+            files.forEach((f) => {
+              try { fs.unlinkSync(path.join(uploadsDir, f)); } catch (e) { /* ignore */ }
+            });
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+    }
+  }
+
+  for (const v of videos) {
+    if (v.publicId) {
+      try {
+        await cloudinaryService.deleteAsset(v.publicId);
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.warn('Failed to delete asset', v.publicId, err.message || err);
+      }
+      if (String(v.publicId).startsWith('local/')) {
+        try {
+          const hash = String(v.publicId).split('/')[1];
+          const uploadsDir = path.resolve(process.cwd(), 'public', 'uploads');
+          if (fs.existsSync(uploadsDir)) {
+            const files = fs.readdirSync(uploadsDir).filter((f) => f.startsWith(hash));
+            files.forEach((f) => {
+              try { fs.unlinkSync(path.join(uploadsDir, f)); } catch (e) { /* ignore */ }
+            });
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+    }
+  }
+
+  // Delete the property document
+  await Property.deleteOne({ _id: id });
+  return null;
 }
 
 async function getFeatured(limit = 6) {
