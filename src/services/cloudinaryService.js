@@ -12,7 +12,7 @@ async function uploadBuffer(buffer, options = {}) {
     // Save the buffer to a local uploads folder so the uploaded image is visible
     const hash = crypto.createHash('md5').update(buffer).digest('hex').slice(0, 12);
     const format = (options.format || 'jpg').replace(/[^a-z0-9]/gi, '').toLowerCase();
-    const uploadsDir = path.resolve(process.cwd(), 'public', 'uploads');
+    const uploadsDir = path.resolve(__dirname, '..', '..', 'public', 'uploads');
     try {
       if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
       const filename = `${hash}.${format}`;

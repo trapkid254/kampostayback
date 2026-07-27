@@ -70,7 +70,7 @@ app.use(setCsrfToken);
 app.use(generalLimiter);
 
 // Serve locally-saved uploads (development fallback when Cloudinary is not configured)
-app.use('/uploads', express.static(path.join(process.cwd(), 'public', 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, '..', 'public', 'uploads')));
 
 app.get('/api/v1/csrf-token', getCsrfToken);
 
