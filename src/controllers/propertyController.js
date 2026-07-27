@@ -27,7 +27,7 @@ const getFeatured = asyncHandler(async (req, res) => {
 });
 
 const getBySlug = asyncHandler(async (req, res) => {
-  const property = await propertyService.getPropertyBySlug(req.params.slug);
+  const property = await propertyService.getPropertyBySlug(req.params.slug, req.user);
   if (req.user) {
     await User.findByIdAndUpdate(req.user._id, {
       $pull: { recentlyViewed: { property: property._id } },
@@ -40,7 +40,7 @@ const getBySlug = asyncHandler(async (req, res) => {
 });
 
 const getById = asyncHandler(async (req, res) => {
-  const property = await propertyService.getPropertyById(req.params.id, req.user?._id);
+  const property = await propertyService.getPropertyById(req.params.id, req.user);
   res.json({ success: true, data: property });
 });
 

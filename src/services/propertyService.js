@@ -131,12 +131,19 @@ async function searchProperties(filters = {}) {
   };
 }
 
-async function getPropertyById(id, userId) {
+async function getPropertyById(id, user) {
   const property = await Property.findById(id)
     .populate('university', 'name slug location logo')
     .populate('landlord', 'profile email verification');
 
   if (!property) throw new AppError('Property not found.', 404);
+
+  // Only allow non-published access to owner or admin
+  const isOwner = user && property.landlord && String(property.landlord._id || property.landlord) === String(user._id);
+  const isAdmin = user && user.role === 'admin';
+  if (property.status !== 'published' && !isOwner && !isAdmin) {
+    throw new AppError('Property not found.', 404);
+  }
 
   property.impressions += 1;
   await property.save({ validateBeforeSave: false });
@@ -144,12 +151,19 @@ async function getPropertyById(id, userId) {
   return property;
 }
 
-async function getPropertyBySlug(slug, incrementView = true) {
+async function getPropertyBySlug(slug, user, incrementView = true) {
   const property = await Property.findOne({ slug })
     .populate('university', 'name slug location logo')
     .populate('landlord', 'profile verification');
 
   if (!property) throw new AppError('Property not found.', 404);
+
+  const isOwner = user && property.landlord && String(property.landlord._id || property.landlord) === String(user._id);
+  const isAdmin = user && user.role === 'admin';
+  if (property.status !== 'published' && !isOwner && !isAdmin) {
+    throw new AppError('Property not found.', 404);
+  }
+
   if (incrementView) await property.incrementViews();
   return property;
 }
