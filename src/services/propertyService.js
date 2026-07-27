@@ -12,7 +12,44 @@ const fs = require('fs');
 const path = require('path');
 const env = require('../config/env');
 
-function buildFilterQuery(filters = {}) {
+function escapeRegex(value = '') {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function buildUniversityLookupQuery(value) {
+  const lookup = String(value || '').trim();
+  if (!lookup) return null;
+
+  const slug = slugify(lookup);
+  return {
+    $or: [
+      { slug },
+      { name: new RegExp(`^${escapeRegex(lookup)}$`, 'i') },
+      { aliases: new RegExp(`^${escapeRegex(lookup)}$`, 'i') },
+    ],
+  };
+}
+
+async function resolveUniversityId(value) {
+  if (!value) return null;
+  if (mongoose.isValidObjectId(value)) return value;
+
+  const query = buildUniversityLookupQuery(value);
+  if (!query) return null;
+
+  const uni = await University.findOne(query).select('_id');
+  return uni?._id || null;
+}
+
+async function findUniversity(value) {
+  if (!value) return null;
+  if (mongoose.isValidObjectId(value)) return University.findById(value);
+  const query = buildUniversityLookupQuery(value);
+  if (!query) return null;
+  return University.findOne(query);
+}
+
+async function buildFilterQuery(filters = {}) {
   const query = {};
   if (filters.status && filters.status !== 'all' && filters.status !== '*') {
     query.status = filters.status;
@@ -20,7 +57,14 @@ function buildFilterQuery(filters = {}) {
     query.status = 'published';
   }
 
-  if (filters.university) query.university = filters.university;
+  if (filters.university) {
+    const universityId = await resolveUniversityId(filters.university);
+    if (universityId) {
+      query.university = universityId;
+    } else {
+      query.university = null;
+    }
+  }
   if (filters.landlord) query.landlord = filters.landlord;
   if (filters.roomType) query.roomType = filters.roomType;
   if (filters.featured !== undefined) query.featured = filters.featured === true || filters.featured === 'true';
@@ -71,7 +115,7 @@ async function searchProperties(filters = {}) {
   const limit = Math.min(50, Math.max(1, parseInt(filters.limit, 10) || 12));
   const skip = (page - 1) * limit;
 
-  let query = buildFilterQuery(filters);
+  let query = await buildFilterQuery(filters);
   let sort = filters.sort || '-featured,-publishedAt';
   let useGeo = false;
 
