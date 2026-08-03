@@ -34,7 +34,18 @@ const getImage = asyncHandler(async (req, res) => {
     throw new AppError('Image not found', 404);
   });
   
-  res.setHeader('Content-Type', 'image/jpeg');
+  // Set proper content type based on file metadata
+  const bucket = imageStorage.getGridFSBucket();
+  const objectId = new mongoose.Types.ObjectId(id);
+  const file = await bucket.find({ _id: objectId }).toArray();
+  
+  if (file.length > 0) {
+    const contentType = file[0].contentType || 'image/jpeg';
+    res.setHeader('Content-Type', contentType);
+  } else {
+    res.setHeader('Content-Type', 'image/jpeg');
+  }
+  
   res.setHeader('Cache-Control', 'public, max-age=31536000');
   stream.pipe(res);
 });
