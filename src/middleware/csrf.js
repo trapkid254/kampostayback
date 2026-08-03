@@ -20,7 +20,7 @@ function setCsrfToken(req, res, next) {
     res.cookie(CSRF_COOKIE, token, {
       httpOnly: false,
       secure: env.NODE_ENV === 'production',
-      sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
+      sameSite: 'none',
       maxAge: 24 * 60 * 60 * 1000,
     });
   }
