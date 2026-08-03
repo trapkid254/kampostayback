@@ -56,8 +56,11 @@ async function uploadBuffer(buffer, options = {}) {
     uploadStream.end();
     
     uploadStream.on('finish', (file) => {
+      const finalUrl = `${env.APP_URL.replace(/\/$/, '')}/api/v1/images/${file._id}`;
       resolve({
-        url: `${env.APP_URL.replace(/\/$/, '')}/api/v1/images/${file._id}`,
+        url: finalUrl,
+        secure_url: finalUrl,
+        secureUrl: finalUrl,
         publicId: file._id.toString(),
         format,
         bytes: file.length,
