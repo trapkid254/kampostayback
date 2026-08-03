@@ -331,7 +331,7 @@ const apiDocs = {
     '/upload/image': {
       post: {
         summary: 'Upload single image',
-        description: 'Upload an image to Cloudinary or local storage',
+        description: 'Upload an image to MongoDB GridFS storage',
         tags: ['Upload'],
         security: [{ bearerAuth: [] }],
         requestBody: {
@@ -346,7 +346,6 @@ const apiDocs = {
                     type: 'string',
                     format: 'binary',
                   },
-                  folder: { type: 'string' },
                 },
               },
             },
@@ -360,10 +359,11 @@ const apiDocs = {
                 example: {
                   success: true,
                   data: {
-                    url: 'https://res.cloudinary.com/...',
-                    publicId: 'kampostay/...',
+                    url: 'https://your-api.com/api/v1/images/...',
+                    publicId: '...',
                     format: 'jpg',
                     bytes: 12345,
+                    storedIn: 'mongodb',
                   },
                 },
               },

@@ -6,7 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const env = require('../src/config/env');
 const Property = require('../src/models/Property');
-const cloudinaryService = require('../src/services/cloudinaryService');
+const imageStorage = require('../src/services/imageStorage');
 
 async function removeLocalFileForPublicId(publicId) {
   if (!publicId) return false;
@@ -46,7 +46,7 @@ async function main() {
         for (const img of imgs) {
           if (img.publicId) {
             try {
-              await cloudinaryService.deleteAsset(img.publicId);
+              await imageStorage.deleteImage(img.publicId);
               console.log('Deleted asset:', img.publicId);
             } catch (err) {
               console.warn('Could not delete asset', img.publicId, err.message);
@@ -57,7 +57,7 @@ async function main() {
         for (const v of vids) {
           if (v.publicId) {
             try {
-              await cloudinaryService.deleteAsset(v.publicId);
+              await imageStorage.deleteImage(v.publicId);
               console.log('Deleted asset:', v.publicId);
             } catch (err) {
               console.warn('Could not delete asset', v.publicId, err.message);

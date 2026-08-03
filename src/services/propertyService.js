@@ -7,7 +7,7 @@ const AppError = require('../utils/AppError');
 const { haversineDistanceKm, estimateWalkingTimeMinutes } = require('../utils/geo');
 const fraudService = require('./fraudService');
 const { slugify } = require('../utils/slugify');
-const cloudinaryService = require('./cloudinaryService');
+const imageStorage = require('./imageStorage');
 const fs = require('fs');
 const path = require('path');
 const env = require('../config/env');
@@ -279,27 +279,11 @@ async function deleteProperty(id, landlordId, isAdmin = false, permanent = false
   for (const img of images) {
     if (img.publicId) {
       try {
-        await cloudinaryService.deleteAsset(img.publicId);
+        await imageStorage.deleteImage(img.publicId);
       } catch (err) {
         // log and continue
         // eslint-disable-next-line no-console
         console.warn('Failed to delete asset', img.publicId, err.message || err);
-      }
-
-      // remove local file when using local fallback publicId
-      if (String(img.publicId).startsWith('local/')) {
-        try {
-          const hash = String(img.publicId).split('/')[1];
-          const uploadsDir = path.resolve(process.cwd(), 'public', 'uploads');
-          if (fs.existsSync(uploadsDir)) {
-            const files = fs.readdirSync(uploadsDir).filter((f) => f.startsWith(hash));
-            files.forEach((f) => {
-              try { fs.unlinkSync(path.join(uploadsDir, f)); } catch (e) { /* ignore */ }
-            });
-          }
-        } catch (e) {
-          // ignore
-        }
       }
     }
   }
@@ -307,24 +291,10 @@ async function deleteProperty(id, landlordId, isAdmin = false, permanent = false
   for (const v of videos) {
     if (v.publicId) {
       try {
-        await cloudinaryService.deleteAsset(v.publicId);
+        await imageStorage.deleteImage(v.publicId);
       } catch (err) {
         // eslint-disable-next-line no-console
         console.warn('Failed to delete asset', v.publicId, err.message || err);
-      }
-      if (String(v.publicId).startsWith('local/')) {
-        try {
-          const hash = String(v.publicId).split('/')[1];
-          const uploadsDir = path.resolve(process.cwd(), 'public', 'uploads');
-          if (fs.existsSync(uploadsDir)) {
-            const files = fs.readdirSync(uploadsDir).filter((f) => f.startsWith(hash));
-            files.forEach((f) => {
-              try { fs.unlinkSync(path.join(uploadsDir, f)); } catch (e) { /* ignore */ }
-            });
-          }
-        } catch (e) {
-          // ignore
-        }
       }
     }
   }
