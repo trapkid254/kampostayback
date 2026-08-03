@@ -15,6 +15,7 @@ const routes = require('./routes');
 const { errorHandler } = require('./middleware/errorHandler');
 const { generalLimiter } = require('./middleware/rateLimiter');
 const { setCsrfToken, verifyCsrf, getCsrfToken } = require('./middleware/csrf');
+const { performanceMonitor, performanceAlert } = require('./middleware/performanceMonitor');
 const path = require('path');
 
 const app = express();
@@ -66,10 +67,12 @@ app.use(cookieParser(env.COOKIE_SECRET));
 app.use(mongoSanitize());
 app.use(xss());
 app.use(hpp());
+app.use(performanceMonitor);
+app.use(performanceAlert);
 app.use(setCsrfToken);
 app.use(generalLimiter);
 
-// Serve locally-saved uploads (development fallback when Cloudinary is not configured)
+// Serve locally-saved uploads (fallback for development)
 app.use('/uploads', express.static(path.join(__dirname, '..', 'public', 'uploads')));
 
 app.get('/api/v1/csrf-token', getCsrfToken);

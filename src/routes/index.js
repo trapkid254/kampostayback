@@ -57,6 +57,7 @@ router.use('/maintenance', maintenanceRoutes);
 router.use('/admin', adminRoutes);
 router.use('/ai', aiRoutes);
 router.use('/wishlist', wishlistRoutes);
-router.use('/uploads', uploadRoutes);
+router.use('/uploads', uploadRoutes.router);
+router.use(uploadRoutes.publicRouter);
 
 module.exports = router;
