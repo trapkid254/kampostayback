@@ -2,7 +2,6 @@
 
 const crypto = require('crypto');
 const mongoose = require('mongoose');
-const { GridFSBucket } = require('mongodb');
 const env = require('../config/env');
 const AppError = require('../utils/AppError');
 
@@ -11,7 +10,7 @@ let gfsBucket;
 function getGridFSBucket() {
   if (!gfsBucket) {
     const db = mongoose.connection.db;
-    gfsBucket = new GridFSBucket(db, {
+    gfsBucket = new mongoose.mongo.GridFSBucket(db, {
       bucketName: 'images',
       chunkSizeBytes: 1048576, // 1MB chunks
     });
