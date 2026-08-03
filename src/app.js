@@ -34,6 +34,7 @@ const allowedOrigins = new Set(
     'http://127.0.0.1:5500',
     'http://127.0.0.1:5501',
     'https://trapkid254.github.io',
+    'https://trapkid254.github.io/kampostay',
   ]
     .filter(Boolean)
     .flatMap((url) => url.split(',').map((s) => s.trim()))
