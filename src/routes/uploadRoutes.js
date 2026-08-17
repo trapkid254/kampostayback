@@ -20,11 +20,19 @@ const publicRouter = express.Router();
 
 // Apply CORS to public router for cross-origin image access
 publicRouter.use(cors({
-  origin: true,
-  credentials: true,
+  origin: '*',
+  credentials: false,
   methods: ['GET', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+
+// Handle OPTIONS preflight requests explicitly
+publicRouter.options('/images/:id', (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.sendStatus(204);
+});
 
 publicRouter.get('/images/:id', uploadController.getImage);
 
