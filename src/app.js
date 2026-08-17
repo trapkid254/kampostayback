@@ -22,6 +22,10 @@ const app = express();
 
 app.set('trust proxy', 1);
 
+// Mount image serving route at the VERY TOP before any middleware to allow public cross-origin access
+const uploadRoutes = require('./routes/uploadRoutes');
+app.use('/api/v1/images', uploadRoutes.publicRouter);
+
 const allowedOrigins = new Set(
   [
     env.CLIENT_URL,
@@ -80,14 +84,6 @@ app.use(generalLimiter);
 app.use('/uploads', express.static(path.join(__dirname, '..', 'public', 'uploads')));
 
 app.get('/api/v1/csrf-token', getCsrfToken);
-
-// Mount image serving route BEFORE CSRF and Helmet middleware to allow public access
-const uploadRoutes = require('./routes/uploadRoutes');
-app.use('/api/v1/images', (req, res, next) => {
-  res.removeHeader('X-Content-Type-Options');
-  res.removeHeader('X-Frame-Options');
-  next();
-}, uploadRoutes.publicRouter);
 
 app.use('/api/v1', verifyCsrf, routes);
 
