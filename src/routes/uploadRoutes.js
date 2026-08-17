@@ -15,7 +15,17 @@ router.post('/images', uploadMultiple('files', 10), uploadController.uploadImage
 router.delete('/', uploadController.deleteAsset);
 
 // Public route for serving images (no auth required)
+const cors = require('cors');
 const publicRouter = express.Router();
+
+// Apply CORS to public router for cross-origin image access
+publicRouter.use(cors({
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
 publicRouter.get('/images/:id', uploadController.getImage);
 
 module.exports = { router, publicRouter };

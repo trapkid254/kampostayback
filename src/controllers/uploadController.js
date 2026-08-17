@@ -1,5 +1,6 @@
 'use strict';
 
+const mongoose = require('mongoose');
 const imageStorage = require('../services/imageStorage');
 const asyncHandler = require('../utils/asyncHandler');
 const AppError = require('../utils/AppError');
