@@ -23,7 +23,6 @@ const app = express();
 app.set('trust proxy', 1);
 
 // Create standalone image handler completely outside router system for maximum CORS control
-const cors = require('cors');
 const imageStorage = require('./services/imageStorage');
 const mongoose = require('mongoose');
 
