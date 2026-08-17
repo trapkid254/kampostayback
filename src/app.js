@@ -58,6 +58,8 @@ app.use(
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   })
 );
 app.use(compression());
