@@ -26,12 +26,19 @@ async function uploadBuffer(buffer, options = {}) {
   const format = (options.format || 'jpg').replace(/[^a-z0-9]/gi, '').toLowerCase();
   const filename = `${hash}.${format}`;
   
+  console.log('[imageStorage] APP_URL:', env.APP_URL);
+  console.log('[imageStorage] NODE_ENV:', env.NODE_ENV);
+  
   // Check if file already exists
   const existingFile = await bucket.find({ filename }).toArray();
   if (existingFile.length > 0) {
     const file = existingFile[0];
+    const url = `${env.APP_URL.replace(/\/$/, '')}/api/v1/images/${file._id}`;
+    console.log('[imageStorage] Existing file URL:', url);
     return {
-      url: `${env.APP_URL.replace(/\/$/, '')}/api/v1/images/${file._id}`,
+      url: url,
+      secure_url: url,
+      secureUrl: url,
       publicId: file._id.toString(),
       format,
       bytes: file.length,
@@ -57,6 +64,7 @@ async function uploadBuffer(buffer, options = {}) {
     
     uploadStream.on('finish', (file) => {
       const finalUrl = `${env.APP_URL.replace(/\/$/, '')}/api/v1/images/${file._id}`;
+      console.log('[imageStorage] New file URL:', finalUrl);
       resolve({
         url: finalUrl,
         secure_url: finalUrl,
