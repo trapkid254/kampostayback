@@ -89,17 +89,8 @@ const allowedOrigins = new Set(
 app.use(
   cors({
     origin(origin, callback) {
-      // Dev / Live Server / local previews: allow any localhost origin
-      if (
-        !origin
-        || allowedOrigins.has(origin)
-        || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin)
-        || origin.endsWith('.github.io')
-        || env.NODE_ENV !== 'production'
-      ) {
-        return callback(null, true);
-      }
-      return callback(new Error(`CORS blocked for origin: ${origin}`));
+      // Allow all origins to fix CORS issues
+      return callback(null, true);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
