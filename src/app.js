@@ -22,7 +22,6 @@ const app = express();
 
 app.set('trust proxy', 1);
 
-app.use(helmet());
 const allowedOrigins = new Set(
   [
     env.CLIENT_URL,
@@ -62,6 +61,8 @@ app.use(
     optionsSuccessStatus: 204,
   })
 );
+
+app.use(helmet());
 app.use(compression());
 app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.json({ limit: '10mb' }));
