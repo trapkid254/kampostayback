@@ -23,8 +23,14 @@ const app = express();
 app.set('trust proxy', 1);
 
 // Mount image serving route at the VERY TOP before any middleware to allow public cross-origin access
+const cors = require('cors');
 const uploadRoutes = require('./routes/uploadRoutes');
-app.use('/api/v1/images', uploadRoutes.publicRouter);
+app.use('/api/v1/images', cors({
+  origin: '*',
+  methods: ['GET', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: false,
+}), uploadRoutes.publicRouter);
 
 const allowedOrigins = new Set(
   [
