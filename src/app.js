@@ -81,9 +81,13 @@ app.use('/uploads', express.static(path.join(__dirname, '..', 'public', 'uploads
 
 app.get('/api/v1/csrf-token', getCsrfToken);
 
-// Mount image serving route BEFORE CSRF middleware to allow public access
+// Mount image serving route BEFORE CSRF and Helmet middleware to allow public access
 const uploadRoutes = require('./routes/uploadRoutes');
-app.use('/api/v1/images', uploadRoutes.publicRouter);
+app.use('/api/v1/images', (req, res, next) => {
+  res.removeHeader('X-Content-Type-Options');
+  res.removeHeader('X-Frame-Options');
+  next();
+}, uploadRoutes.publicRouter);
 
 app.use('/api/v1', verifyCsrf, routes);
 
