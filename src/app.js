@@ -22,15 +22,53 @@ const app = express();
 
 app.set('trust proxy', 1);
 
-// Mount image serving route at the VERY TOP before any middleware to allow public cross-origin access
+// Create standalone image handler completely outside router system for maximum CORS control
 const cors = require('cors');
-const uploadRoutes = require('./routes/uploadRoutes');
-app.use('/api/v1/images', cors({
+const imageStorage = require('./services/imageStorage');
+const mongoose = require('mongoose');
+
+const imageCors = cors({
   origin: '*',
   methods: ['GET', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: false,
-}), uploadRoutes.publicRouter);
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+});
+
+app.get('/api/v1/images/:id', imageCors, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const stream = await imageStorage.getImageStream(id);
+    
+    stream.on('error', (error) => {
+      return res.status(404).json({ success: false, message: 'Image not found' });
+    });
+    
+    const bucket = imageStorage.getGridFSBucket();
+    const objectId = new mongoose.Types.ObjectId(id);
+    const file = await bucket.find({ _id: objectId }).toArray();
+    
+    if (file.length > 0) {
+      const contentType = file[0].contentType || 'image/jpeg';
+      res.setHeader('Content-Type', contentType);
+    } else {
+      res.setHeader('Content-Type', 'image/jpeg');
+    }
+    
+    res.setHeader('Cache-Control', 'public, max-age=31536000');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    stream.pipe(res);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.options('/api/v1/images/:id', imageCors, (req, res) => {
+  res.sendStatus(204);
+});
 
 const allowedOrigins = new Set(
   [
