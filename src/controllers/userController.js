@@ -44,4 +44,16 @@ const approveVerification = asyncHandler(async (req, res) => {
   res.json({ success: true, data: user });
 });
 
-module.exports = { getUsers, getUserById, updateUserStatus, approveVerification };
+const getLandlords = asyncHandler(async (req, res) => {
+  const { page = 1, limit = 50 } = req.query;
+  const query = { role: 'landlord', isActive: true };
+
+  const [landlords, total] = await Promise.all([
+    User.find(query).select('-password -refreshTokens').skip((page - 1) * limit).limit(Number(limit)),
+    User.countDocuments(query),
+  ]);
+
+  res.json({ success: true, data: landlords, pagination: { page: Number(page), limit: Number(limit), total } });
+});
+
+module.exports = { getUsers, getUserById, updateUserStatus, approveVerification, getLandlords };
