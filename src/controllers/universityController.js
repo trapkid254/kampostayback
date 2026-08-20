@@ -41,4 +41,10 @@ const update = asyncHandler(async (req, res) => {
   res.json({ success: true, data: university });
 });
 
-module.exports = { list, getBySlug, getById, create, update };
+const remove = asyncHandler(async (req, res) => {
+  const university = await University.findByIdAndDelete(req.params.id);
+  if (!university) throw new AppError('University not found.', 404);
+  res.json({ success: true, message: 'University deleted successfully' });
+});
+
+module.exports = { list, getBySlug, getById, create, update, remove };

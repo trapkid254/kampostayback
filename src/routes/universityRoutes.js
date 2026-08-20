@@ -11,5 +11,6 @@ router.get('/slug/:slug', universityController.getBySlug);
 router.get('/:id', universityController.getById);
 router.post('/', protect, authorize('admin'), universityController.create);
 router.patch('/:id', protect, authorize('admin'), universityController.update);
+router.delete('/:id', protect, authorize('admin'), universityController.remove);
 
 module.exports = router;
