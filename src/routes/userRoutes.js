@@ -10,6 +10,7 @@ router.use(protect, authorize('admin'));
 
 router.get('/', userController.getUsers);
 router.get('/landlords', userController.getLandlords);
+router.get('/students', userController.getStudents);
 router.get('/:id', userController.getUserById);
 router.patch('/:id/status', userController.updateUserStatus);
 router.patch('/:id/verify', userController.approveVerification);
