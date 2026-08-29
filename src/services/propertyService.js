@@ -236,6 +236,7 @@ async function createProperty(landlordId, data) {
     landlord: landlordId,
     fraudScore: fraudCheck.score,
     verification: { status: fraudCheck.score > 60 ? 'pending' : 'pending' },
+    status: data.status || 'published',
   });
   return Property.findById(property._id).populate('university', 'name slug');
 }
