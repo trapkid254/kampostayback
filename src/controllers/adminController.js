@@ -15,12 +15,17 @@ const dashboard = asyncHandler(async (req, res) => {
 
 const bookingTrends = asyncHandler(async (req, res) => {
   const trends = await analyticsService.getBookingTrends(Number(req.query.days) || 30);
-  res.json({ success: true, data: trends });
+  const labels = trends.map(t => t._id);
+  const data = trends.map(t => t.count);
+  res.json({ success: true, data: { labels, data, trends } });
 });
 
 const revenueTrends = asyncHandler(async (req, res) => {
   const trends = await analyticsService.getRevenueTrends(Number(req.query.days) || 30);
-  res.json({ success: true, data: trends });
+  const labels = trends.map(t => t._id);
+  const data = trends.map(t => t.revenue);
+  const count = trends.map(t => t.count);
+  res.json({ success: true, data: { labels, data, count, trends } });
 });
 
 const verifyProperty = asyncHandler(async (req, res) => {
@@ -61,6 +66,75 @@ const suspendUser = asyncHandler(async (req, res) => {
   res.json({ success: true, data: user });
 });
 
+const unsuspendUser = asyncHandler(async (req, res) => {
+  const user = await User.findByIdAndUpdate(req.params.id, { isActive: true }, { new: true });
+  if (!user) throw new AppError('User not found.', 404);
+  res.json({ success: true, data: user });
+});
+
+const getVerificationQueue = asyncHandler(async (req, res) => {
+  const properties = await Property.find({ 'verification.status': 'pending' })
+    .populate('landlord', 'profile email')
+    .populate('university', 'name')
+    .sort('-createdAt')
+    .limit(50);
+  res.json({ success: true, data: properties });
+});
+
+const getPropertyStatistics = asyncHandler(async (req, res) => {
+  const stats = await Property.aggregate([
+    {
+      $facet: {
+        byStatus: [
+          { $group: { _id: '$status', count: { $sum: 1 } } },
+        ],
+        byVerification: [
+          { $group: { _id: '$verification.status', count: { $sum: 1 } } },
+        ],
+      },
+    },
+  ]);
+  res.json({ success: true, data: stats[0] || {} });
+});
+
+const getReportStatistics = asyncHandler(async (req, res) => {
+  const Report = require('../models/Report');
+  const stats = await Report.aggregate([
+    {
+      $facet: {
+        byStatus: [
+          { $group: { _id: '$status', count: { $sum: 1 } } },
+        ],
+        byType: [
+          { $group: { _id: '$type', count: { $sum: 1 } } },
+        ],
+      },
+    },
+  ]);
+  res.json({ success: true, data: stats[0] || {} });
+});
+
+const getUserStatistics = asyncHandler(async (req, res) => {
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const stats = await User.aggregate([
+    {
+      $facet: {
+        byRole: [
+          { $group: { _id: '$role', count: { $sum: 1 } } },
+        ],
+        newUsers: [
+          { $match: { createdAt: { $gte: thirtyDaysAgo } } },
+          { $group: { _id: '$role', count: { $sum: 1 } } },
+        ],
+        verified: [
+          { $group: { _id: '$verification.email.verified', count: { $sum: 1 } } },
+        ],
+      },
+    },
+  ]);
+  res.json({ success: true, data: stats[0] || {} });
+});
+
 module.exports = {
   dashboard,
   bookingTrends,
@@ -70,4 +144,9 @@ module.exports = {
   getSettings,
   updateSetting,
   suspendUser,
+  unsuspendUser,
+  getVerificationQueue,
+  getPropertyStatistics,
+  getReportStatistics,
+  getUserStatistics,
 };
