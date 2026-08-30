@@ -230,6 +230,18 @@ async function createProperty(landlordId, data) {
     }
   }
 
+  // Auto-populate location coordinates from university if not provided
+  if (data.university && (!data.location?.coordinates?.coordinates || data.location?.coordinates?.coordinates?.length === 0)) {
+    const uni = await University.findById(data.university);
+    if (uni?.location?.coordinates?.coordinates) {
+      data.location = data.location || {};
+      data.location.coordinates = {
+        type: 'Point',
+        coordinates: uni.location.coordinates.coordinates
+      };
+    }
+  }
+
   const fraudCheck = await fraudService.analyzeListing(data, landlordId);
   const property = await Property.create({
     ...data,

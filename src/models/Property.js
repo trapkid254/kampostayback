@@ -54,7 +54,7 @@ const propertySchema = new mongoose.Schema(
       country: { type: String, default: 'Kenya' },
       coordinates: {
         type: { type: String, enum: ['Point'], default: 'Point' },
-        coordinates: { type: [Number], required: true },
+        coordinates: { type: [Number] }, // Made optional - will be auto-populated from university if not provided
       },
     },
     media: {
